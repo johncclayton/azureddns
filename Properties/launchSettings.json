@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "azureddns": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "AZURE_SUBSCRIPTION_ID": "7ae6ca58-40e5-46b9-ac78-4fccf10c7a47"
+      }
+    }
+  }
+}
