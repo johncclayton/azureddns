@@ -10,6 +10,10 @@ variable "spn-client-id" {
     type = string
 }
 
+variable "subscription_id" {
+    type = string  
+}
+
 variable "prefix" {
     type = string
     default = "AzDNSRG-5"
