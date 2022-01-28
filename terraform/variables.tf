@@ -10,6 +10,11 @@ variable "spn-client-id" {
     type = string
 }
 
+variable "prefix" {
+    type = string
+    default = "AzDNSRG-5"
+}
+
 variable "location" {
     type = string
     default = "switzerlandnorth"

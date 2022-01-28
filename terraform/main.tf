@@ -1,6 +1,6 @@
 
 resource "azurerm_resource_group" "rg" {
-  name     = "AzDNSRG-5" 
+  name     = title("${var.prefix}") 
   location = "${var.location}"
 }
 
