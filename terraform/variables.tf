@@ -10,7 +10,7 @@ variable "spn-client-id" {
     type = string
 }
 
-variable "subscription_id" {
+variable "subscription-id" {
     type = string  
 }
 
