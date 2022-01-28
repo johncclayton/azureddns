@@ -2,6 +2,7 @@ $exclude = @(".vs", "deploy", "build.ps1", ".gitignore", ".terra*", "*.tf", ".vs
 
 Push-Location ..
 
+# changes must of course be made in the terraform folder :-)
 # Remove-Item -Force -Recurse -Path deploy
 # Remove-Item -Force -Recurse -Path bin/Release
 # Remove-Item -Force -Recurse -Path obj/Release
