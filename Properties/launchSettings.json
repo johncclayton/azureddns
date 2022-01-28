@@ -3,7 +3,6 @@
     "azureddns": {
       "commandName": "Project",
       "environmentVariables": {
-        
       }
     }
   }
