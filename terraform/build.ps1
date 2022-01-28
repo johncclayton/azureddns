@@ -2,9 +2,9 @@ $exclude = @(".vs", "deploy", "build.ps1", ".gitignore", ".terra*", "*.tf", ".vs
 
 Push-Location ..
 
-Remove-Item -Force -Recurse -Path deploy
-Remove-Item -Force -Recurse -Path bin/Release
-Remove-Item -Force -Recurse -Path obj/Release
+# Remove-Item -Force -Recurse -Path deploy
+# Remove-Item -Force -Recurse -Path bin/Release
+# Remove-Item -Force -Recurse -Path obj/Release
 
 New-Item -ItemType Directory -Force -Path deploy
 & dotnet publish --sc -c Release -o build
