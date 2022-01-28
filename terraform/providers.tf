@@ -1,6 +1,5 @@
 
 provider "azurerm" {
-  version = "= 2.94.0"
   features {}
 
   client_id         = var.spn-secret-id
