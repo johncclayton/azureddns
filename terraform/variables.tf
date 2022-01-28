@@ -31,7 +31,7 @@ variable "environment" {
 
 variable "functionapp" {
     type = string
-    default = "../deploy/functionapp.zip"
+    default = "./deploy/functionapp.zip"
 }
 
 resource "random_string" "storage_name" {
