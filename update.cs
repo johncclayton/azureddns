@@ -24,7 +24,8 @@ namespace azureddns
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            GetUpdateDataFromRequest(req, out UpdateData r);
+            UpdateData r = await GetUpdateDataFromRequest(req);
+
             if(!r.IsValid(out string msg))
             {
                 return new BadRequestObjectResult(msg);
@@ -71,21 +72,23 @@ namespace azureddns
             return client;
         }
 
-        private static void GetUpdateDataFromRequest(HttpRequest req, out UpdateData d)
+        private static async Task<UpdateData> GetUpdateDataFromRequest(HttpRequest req)
         {
-            d = new UpdateData();
+            var d = new UpdateData();
 
             d.zone = req.Query["zone"];
             d.name = req.Query["name"];
             d.group = req.Query["group"];
             d.reqip = req.Query["reqip"];
 
-            string requestBody = new StreamReader(req.Body).ReadToEnd();
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
             d.zone = d.zone ?? data?.zone;
             d.name = d.name ?? data?.name;
             d.group = d.group ?? data?.group;
             d.reqip = d.reqip ?? data?.reqip;
+
+            return d;
         }
     }
 }
