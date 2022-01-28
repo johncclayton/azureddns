@@ -16,7 +16,7 @@ variable "subscription-id" {
 
 variable "prefix" {
     type = string
-    default = "AzDNSRG-5"
+    default = "AzDNSRG"
 }
 
 variable "location" {
