@@ -1,6 +1,13 @@
-variable "prefix" {
+variable "spn-tenant-id" {
     type = string
-    default = "AzDNSRG"
+}
+
+variable "spn-secret-value" {
+    type = string
+}
+
+variable "spn-client-id" {
+    type = string
 }
 
 variable "location" {
