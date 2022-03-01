@@ -102,7 +102,7 @@ namespace azureddns
                 return d;
             }
 
-            catch (Exception e)
+            catch (Exception)
             {
                 // NO-OP - just making it more robust
             }
