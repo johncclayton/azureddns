@@ -24,7 +24,12 @@ namespace azureddns
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            UpdateData r = await GetUpdateDataFromRequest(req);
+            UpdateData r = GetUpdateDataFromRequest(
+                req.Query["zone"].ToString(),
+                req.Query["name"].ToString(),
+                req.Query["group"].ToString(),
+                req.Query["reqip"].ToString(), 
+                await new StreamReader(req.Body).ReadToEndAsync());
 
             if(!r.IsValid(out string msg))
             {
@@ -32,7 +37,7 @@ namespace azureddns
             }
 
             DnsManagementClient client = await GetDNSManagementClient();
-            UpdateDNS_ARecord updater = new UpdateDNS_ARecord(log, client, r);
+            UpdateDNS_ARecord updater = new UpdateDNS_ARecord(log, new AzureDnsManagementClient(client), r);
 
             try
             {
@@ -72,21 +77,35 @@ namespace azureddns
             return client;
         }
 
-        private static async Task<UpdateData> GetUpdateDataFromRequest(HttpRequest req)
+        public static UpdateData GetUpdateDataFromRequest(string zone, string name, string group, string reqip, string body = null)
         {
-            var d = new UpdateData();
+            var d = new UpdateData()
+            {
+                name = name,
+                zone = zone,
+                resgroup = group,
+                reqip = reqip
+            };
 
-            d.zone = req.Query["zone"];
-            d.name = req.Query["name"];
-            d.group = req.Query["group"];
-            d.reqip = req.Query["reqip"];
+            if (body == null)
+                return d;
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            d.zone = d.zone ?? data?.zone;
-            d.name = d.name ?? data?.name;
-            d.group = d.group ?? data?.group;
-            d.reqip = d.reqip ?? data?.reqip;
+            try
+            {
+                dynamic data = JsonConvert.DeserializeObject(body);
+
+                d.zone = d.zone ?? data?.zone;
+                d.name = d.name ?? data?.name;
+                d.resgroup = d.resgroup ?? data?.group;
+                d.reqip = d.reqip ?? data?.reqip;
+
+                return d;
+            }
+
+            catch (Exception e)
+            {
+                // NO-OP - just making it more robust
+            }
 
             return d;
         }

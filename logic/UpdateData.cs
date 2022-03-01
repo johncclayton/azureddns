@@ -9,7 +9,7 @@ namespace azureddns
     /// 
     public class UpdateData
     {
-        public string zone, name, group, reqip;
+        public string zone, name, resgroup, reqip;
 
         public bool IsValid(out string msg)
         {
@@ -19,7 +19,7 @@ namespace azureddns
                 return false;
             }
 
-            if (string.IsNullOrEmpty(group))
+            if (string.IsNullOrEmpty(resgroup))
             {
                 msg = new string("no 'group', please specify a resource group where the zone exists");
                 return false;

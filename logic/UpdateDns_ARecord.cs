@@ -1,17 +1,12 @@
 ﻿using System;
 
-using Microsoft.Azure.Management.Dns;
 using Microsoft.Azure.Management.Dns.Models;
 
-using Azure.Identity;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
 using System.Threading.Tasks;
-using Azure.Core;
-using Microsoft.Rest;
+
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using System.Linq;
+using azureddns.interfaces;
 
 namespace azureddns
 {
@@ -21,11 +16,11 @@ namespace azureddns
 	/// </summary>
 	public class UpdateDNS_ARecord
 	{
-        private DnsManagementClient _client = null;
+        private IDNSManagementClient _client = null;
         private ILogger _log;
         private UpdateData _data;
 
-        public UpdateDNS_ARecord(ILogger log, DnsManagementClient client, UpdateData data)
+        public UpdateDNS_ARecord(ILogger log, IDNSManagementClient client, UpdateData data)
 		{
             _log = log;
             _data = data;
@@ -36,15 +31,15 @@ namespace azureddns
         {
             RecordSet recordSet = null;
 
-            if (string.IsNullOrEmpty(_client.SubscriptionId))
+            if (!_client.IsValid())
             {
                 return new Tuple<bool, string>(false, "subscription ID could not be found, this means auth will fail for dns code - stopping here");
             }
 
             try
             {
-                _log.LogInformation($"looking for A record in group: {_data.group}, zone: {_data.zone}, name: {_data.name}");
-                recordSet = await _client.RecordSets.GetAsync(_data.group, _data.zone, _data.name, RecordType.A);
+                _log.LogInformation($"looking for A record in group: {_data.resgroup}, zone: {_data.zone}, name: {_data.name}");
+                recordSet = await _client.GetRecordSetAsync(_data.resgroup, _data.zone, _data.name, RecordType.A);
             }
 
             catch { }
@@ -59,8 +54,8 @@ namespace azureddns
 
                 recordSet.ARecords.Clear();
                 recordSet.ARecords.Add(new ARecord(_data.reqip));
-                recordSet = await _client.RecordSets.UpdateAsync(_data.group, _data.zone, _data.name, RecordType.A, recordSet);
-
+                await _client.AddRecordSetAsync(_data.resgroup, _data.zone, _data.name, RecordType.A, recordSet);
+                
                 return new Tuple<bool, string>(true, $"good {_data.reqip}");
             }
             else
@@ -72,8 +67,9 @@ namespace azureddns
                 recordSet.TTL = 3600;
                 recordSet.ARecords = new List<ARecord>();
                 recordSet.ARecords.Add(new ARecord(_data.reqip));
-                recordSet = await _client.RecordSets.CreateOrUpdateAsync(_data.group, _data.zone, _data.name, RecordType.A, recordSet);
-
+                await _client.CreateOrUpdateRecordSetAsync(_data.resgroup, _data.zone, _data.name, RecordType.A,
+                    recordSet);
+                
                 return new Tuple<bool, string>(true, $"good {_data.reqip}");
             }
 
