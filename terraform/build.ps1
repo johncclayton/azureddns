@@ -6,6 +6,6 @@ New-Item -ItemType Directory -Force -Path deploy
 # so the .zip file is pushed into the terraform directory
 
 Push-Location .. 
-& dotnet publish --sc -c Release -o build
+& dotnet publish azureddns.csproj --sc -c Release -o build
 Get-ChildItem -Path ./build -Exclude $exclude | Compress-Archive -DestinationPath terraform/deploy/functionapp.zip -Force
 Pop-Location

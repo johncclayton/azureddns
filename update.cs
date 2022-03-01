@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -21,17 +20,18 @@ namespace azureddns
     {
         [FunctionName("update")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
+            HttpRequest req,
             ILogger log)
         {
             UpdateData r = GetUpdateDataFromRequest(
                 req.Query["zone"].ToString(),
                 req.Query["name"].ToString(),
                 req.Query["group"].ToString(),
-                req.Query["reqip"].ToString(), 
+                req.Query["reqip"].ToString(),
                 await new StreamReader(req.Body).ReadToEndAsync());
 
-            if(!r.IsValid(out string msg))
+            if (!r.IsValid(out string msg))
             {
                 return new BadRequestObjectResult(msg);
             }
@@ -43,12 +43,12 @@ namespace azureddns
             {
                 // response according to: https://www.dnsomatic.com/docs/api
                 Tuple<bool, string> result = await updater.PerformUpdate();
-                if(result.Item1)
+                if (result.Item1)
                     return new OkObjectResult(result.Item2);
                 else
                     return new BadRequestObjectResult(result.Item2 ?? string.Empty);
             }
-                        
+
             catch (Exception ex)
             {
                 log.LogError($"failed to exec: {ex.Message}");
@@ -67,7 +67,8 @@ namespace azureddns
             Subscription subscription = await armClient.GetDefaultSubscriptionAsync();
 
             // this fetches a token for the management layer, making use of the managed system identity that Terraform set up. 
-            var token = await defaultClient.GetTokenAsync(new TokenRequestContext(new[] { $"https://management.azure.com/.default" }));
+            var token = await defaultClient.GetTokenAsync(new TokenRequestContext(new[]
+                {$"https://management.azure.com/.default"}));
             ServiceClientCredentials dnsCreds = new TokenCredentials(token.Token);
 
             // now fire up the DnsManagementClient using the token crendentials.
@@ -77,7 +78,8 @@ namespace azureddns
             return client;
         }
 
-        public static UpdateData GetUpdateDataFromRequest(string zone, string name, string group, string reqip, string body = null)
+        public static UpdateData GetUpdateDataFromRequest(string zone, string name, string group, string reqip,
+            string body = null)
         {
             var d = new UpdateData()
             {

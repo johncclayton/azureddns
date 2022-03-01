@@ -267,3 +267,4 @@ terraform.tfstate**
 .terraform/**
 build/**
 deploy/**
+/terraform/deploy/functionapp.zip
