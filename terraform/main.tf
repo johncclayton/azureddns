@@ -94,6 +94,7 @@ resource "azurerm_function_app" "functions" {
         https_only = true
         FUNCTIONS_WORKER_RUNTIME = "dotnet"
         FUNCTIONS_EXTENSION_VERSION = "~4"
+        FUNCTIONS_V2_COMPATIBILITY_MODE = "true"
         FUNCTION_APP_EDIT_MODE = "readonly"
         APPINSIGHTS_INSTRUMENTATIONKEY = "${azurerm_application_insights.insights.instrumentation_key}"
         AzureWebJobsStorage = "${azurerm_storage_account.storage.primary_connection_string}"
