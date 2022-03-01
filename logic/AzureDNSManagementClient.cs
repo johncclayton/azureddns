@@ -2,12 +2,6 @@
 using azureddns.interfaces;
 using Microsoft.Azure.Management.Dns;
 using Microsoft.Azure.Management.Dns.Models;
-using Azure.Identity;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
-using Azure.Core;
-using Microsoft.Rest;
-using Microsoft.Azure.Management.Dns;
 
 namespace azureddns;
 
