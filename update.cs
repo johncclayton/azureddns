@@ -24,12 +24,13 @@ namespace azureddns
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            var bodyData = await new StreamReader(req.Body).ReadToEndAsync(); 
             UpdateData r = GetUpdateDataFromRequest(
                 req.Query["zone"].ToString(),
                 req.Query["name"].ToString(),
                 req.Query["group"].ToString(),
                 req.Query["reqip"].ToString(), 
-                await new StreamReader(req.Body).ReadToEndAsync());
+                bodyData);
 
             if(!r.IsValid(out string msg))
             {
