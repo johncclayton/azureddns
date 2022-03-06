@@ -15,14 +15,13 @@ resource "azurerm_storage_account" "storage" {
     location = "${var.location}"
     account_tier = "Standard"
     account_replication_type = "LRS"
-    tags = var.tags
+    tags = local.tags
 }
 
 resource "azurerm_storage_container" "deployments" {
     name = "function-releases"
     storage_account_name = "${azurerm_storage_account.storage.name}"
     container_access_type = "private"
-    tags = var.tags
 }
 
 resource "azurerm_storage_blob" "appcode" {
@@ -31,7 +30,6 @@ resource "azurerm_storage_blob" "appcode" {
     storage_container_name = "${azurerm_storage_container.deployments.name}"
     type = "Block"
     source = "${var.functionapp}"
-    tags = var.tags
 }
 
 data "azurerm_storage_account_sas" "sas" {
@@ -39,7 +37,7 @@ data "azurerm_storage_account_sas" "sas" {
     https_only = true
     start = "2021-11-30"
     expiry = "2022-12-31"
-    tags = var.tags
+
     resource_types {
         object = true
         container = false
@@ -68,14 +66,14 @@ resource "azurerm_application_insights" "insights" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   application_type    = "web"
-  tags = var.tags
+  tags = local.tags
 }
 
 resource "azurerm_app_service_plan" "asp" {
   name                = "${var.prefix}-plan"
   location            = "${var.location}"
   resource_group_name = azurerm_resource_group.rg.name
-  tags = var.tags
+  tags = local.tags
 
   kind = "FunctionApp"
 
@@ -94,7 +92,7 @@ resource "azurerm_function_app" "functions" {
     resource_group_name = "${azurerm_resource_group.rg.name}"
     app_service_plan_id = "${azurerm_app_service_plan.asp.id}"
     storage_connection_string = "${azurerm_storage_account.storage.primary_connection_string}"
-    tags = var.tags
+    tags = local.tags
 
     version = "~4"
 
@@ -119,7 +117,6 @@ resource "azurerm_role_assignment" "roledns" {
   scope                = data.azurerm_subscription.primary.id
   role_definition_name = "DNS Zone Contributor"
   principal_id         = azurerm_function_app.functions.identity.0.principal_id
-  tags = var.tags
 }
 
 
