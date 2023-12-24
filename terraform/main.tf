@@ -35,8 +35,8 @@ resource "azurerm_storage_blob" "appcode" {
 data "azurerm_storage_account_sas" "sas" {
     connection_string = "${azurerm_storage_account.storage.primary_connection_string}"
     https_only = true
-    start = "2021-11-30"
-    expiry = "2022-12-31"
+    start = "2023-11-30"
+    expiry = "2024-12-31"
 
     resource_types {
         object = true
