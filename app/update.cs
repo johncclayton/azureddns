@@ -1,30 +1,31 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Microsoft.Azure.Management.Dns;
+using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
+using AzureAppFunc.logic;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Dns;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Rest;
-using Azure.Core;
+using Newtonsoft.Json;
 
-namespace azureddns
+namespace AzureAppFunc
 {
-    public static class update
+    public static class Update
     {
         [FunctionName("update")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            var bodyData = await new StreamReader(req.Body).ReadToEndAsync(); 
+            log.LogInformation("update function triggered.");
+            var bodyData = await new StreamReader(req.Body).ReadToEndAsync();
+            
             UpdateData r = GetUpdateDataFromRequest(
                 req.Query["zone"].ToString(),
                 req.Query["name"].ToString(),
@@ -38,7 +39,7 @@ namespace azureddns
             }
 
             DnsManagementClient client = await GetDNSManagementClient();
-            UpdateDNS_ARecord updater = new UpdateDNS_ARecord(log, new AzureDnsManagementClient(client), r);
+            UpdateDnsARecord updater = new UpdateDnsARecord(log, new AzureDnsManagementClient(client), r);
 
             try
             {
@@ -62,23 +63,22 @@ namespace azureddns
         {
             // this bit just gets the subscription ID - which the DNSManagementClient will need,
             // and using it this way means we don't need to provide the app with an environment variable.
-            var defaultClient = new DefaultAzureCredential();
+            var credential = new DefaultAzureCredential();
 
-            ArmClient armClient = new ArmClient(defaultClient);
-            Subscription subscription = await armClient.GetDefaultSubscriptionAsync();
-
-            // this fetches a token for the management layer, making use of the managed system identity that Terraform set up. 
-            var token = await defaultClient.GetTokenAsync(new TokenRequestContext(new[] { $"https://management.azure.com/.default" }));
+            ArmClient armClient = new ArmClient(credential);
+            var subscription = await armClient.GetDefaultSubscriptionAsync();
+            
+            var token = await credential.GetTokenAsync(new TokenRequestContext(new[] { $"https://management.azure.com/.default" }));
             ServiceClientCredentials dnsCreds = new TokenCredentials(token.Token);
-
+            
             // now fire up the DnsManagementClient using the token crendentials.
             DnsManagementClient client = new DnsManagementClient(dnsCreds);
-            client.SubscriptionId = subscription.Data.SubscriptionGuid;
+            client.SubscriptionId = subscription.Data.SubscriptionId;
 
-            return client;
+            return new DnsManagementClient(dnsCreds);
         }
 
-        public static UpdateData GetUpdateDataFromRequest(string zone, string name, string group, string reqip, string body = null)
+        public static UpdateData GetUpdateDataFromRequest(string zone, string name, string group, string reqip, string? body = null)
         {
             var d = new UpdateData()
             {
@@ -93,17 +93,19 @@ namespace azureddns
 
             try
             {
-                dynamic data = JsonConvert.DeserializeObject(body);
+                dynamic? data = JsonConvert.DeserializeObject(body);
+                if (data == null)
+                    return d;
 
-                d.zone = d.zone ?? data?.zone;
-                d.name = d.name ?? data?.name;
-                d.resgroup = d.resgroup ?? data?.group;
-                d.reqip = d.reqip ?? data?.reqip;
+                d.zone = d.zone ?? data.zone;
+                d.name = d.name ?? data.name;
+                d.resgroup = d.resgroup ?? data.group;
+                d.reqip = d.reqip ?? data.reqip;
 
                 return d;
             }
 
-            catch (Exception e)
+            catch (Exception)
             {
                 // NO-OP - just making it more robust
             }

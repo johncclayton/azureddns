@@ -1,26 +1,23 @@
 ﻿using System;
-
-using Microsoft.Azure.Management.Dns.Models;
-
-using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using azureddns.interfaces;
+using System.Threading.Tasks;
+using AzureAppFunc.interfaces;
+using Microsoft.Azure.Management.Dns.Models;
+using Microsoft.Extensions.Logging;
 
-namespace azureddns
+namespace AzureAppFunc.logic
 {
 
 	/// <summary>
 	/// Summary description for Class1
 	/// </summary>
-	public class UpdateDNS_ARecord
+	public class UpdateDnsARecord
 	{
-        private IDNSManagementClient _client = null;
-        private ILogger _log;
-        private UpdateData _data;
+        private readonly IDnsManagementClient _client;
+        private readonly ILogger _log;
+        private readonly UpdateData _data;
 
-        public UpdateDNS_ARecord(ILogger log, IDNSManagementClient client, UpdateData data)
+        public UpdateDnsARecord(ILogger log, IDnsManagementClient client, UpdateData data)
 		{
             _log = log;
             _data = data;
@@ -29,7 +26,7 @@ namespace azureddns
 
         public async Task<Tuple<bool, string>> PerformUpdate()
         {
-            RecordSet recordSet = null;
+            RecordSet? recordSet = null;
 
             if (!_client.IsValid())
             {
@@ -42,7 +39,10 @@ namespace azureddns
                 recordSet = await _client.GetRecordSetAsync(_data.resgroup, _data.zone, _data.name, RecordType.A);
             }
 
-            catch { }
+            catch
+            {
+                // ignore EVERYTHING - if we cannot find the the DNS record, below we'll create it
+            }
 
             if (recordSet != null)
             {
@@ -72,9 +72,6 @@ namespace azureddns
                 
                 return new Tuple<bool, string>(true, $"good {_data.reqip}");
             }
-
-            
         }
     }
-
 }

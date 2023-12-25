@@ -1,9 +1,7 @@
-﻿namespace azureddns;
+﻿using System;
 
-/// <summary>
-/// Summary description for Class1
-/// </summary>
-/// 
+namespace AzureAppFunc.logic;
+
 public class UpdateData
 {
     public string zone, name, resgroup, reqip;
@@ -24,17 +22,17 @@ public class UpdateData
 
         if (string.IsNullOrEmpty(zone))
         {
-            msg = new string("no 'zone', specify the DNS zone - is must exist already");
+            msg = new string("no 'zone', specify the DNS zone - it must exist already");
             return false;
         }
 
         if (string.IsNullOrEmpty(reqip))
         {
-            msg = new string("despite assumptions - you still need to supply the IP address to set");
+            msg = new string("no IP address set");
             return false;
         }
 
-        msg = null;
+        msg = String.Empty;
 
         return true;
     }

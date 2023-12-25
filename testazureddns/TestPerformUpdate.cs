@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using azureddns;
-using azureddns.interfaces;
+using AzureAppFunc;
+using AzureAppFunc.logic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -11,13 +11,13 @@ namespace testazureddns;
 public class TestPerformUpdate
 {
     private readonly ILogger _fakeLogger = new NullLogger<TestPerformUpdate>();
-    private readonly UpdateData _updateData = update.GetUpdateDataFromRequest("z", "n", "g", "ip");
+    private readonly UpdateData _updateData = Update.GetUpdateDataFromRequest("z", "n", "g", "ip");
     
     [Fact]
     public async Task TestPerformUpdate_WhenDNSIsNotValid()
     {
         var fakeDNS = new FakeDnsManagementClient() { ExistingIp = null, Valid = false };
-        UpdateDNS_ARecord t = new UpdateDNS_ARecord(_fakeLogger, fakeDNS, _updateData);
+        UpdateDnsARecord t = new UpdateDnsARecord(_fakeLogger, fakeDNS, _updateData);
         var (result, msg) = await t.PerformUpdate();
         Assert.False(result);
     }
@@ -27,7 +27,7 @@ public class TestPerformUpdate
     public async Task TestPerformUpdate_NoExistingDns()
     {
         var fakeDNS = new FakeDnsManagementClient() { ExistingIp = null };
-        UpdateDNS_ARecord t = new UpdateDNS_ARecord(_fakeLogger, fakeDNS, _updateData);
+        UpdateDnsARecord t = new UpdateDnsARecord(_fakeLogger, fakeDNS, _updateData);
         var (result, msg) = await t.PerformUpdate();
         Assert.True(result);
         Assert.Equal("good ip", msg);
@@ -39,7 +39,7 @@ public class TestPerformUpdate
     {
         var fakeDNS = new FakeDnsManagementClient() { ExistingIp = "1.2.3.4" };
         _updateData.reqip = "1.2.3.4";
-        UpdateDNS_ARecord t = new UpdateDNS_ARecord(_fakeLogger, fakeDNS, _updateData);
+        UpdateDnsARecord t = new UpdateDnsARecord(_fakeLogger, fakeDNS, _updateData);
         var (result, msg) = await t.PerformUpdate();
         Assert.True(result);
         Assert.Equal("nochg 1.2.3.4", msg);
@@ -52,7 +52,7 @@ public class TestPerformUpdate
     {
         var fakeDNS = new FakeDnsManagementClient() { ExistingIp = "1.2.3.4" };
         _updateData.reqip = "4.3.2.1";
-        UpdateDNS_ARecord t = new UpdateDNS_ARecord(_fakeLogger, fakeDNS, _updateData);
+        UpdateDnsARecord t = new UpdateDnsARecord(_fakeLogger, fakeDNS, _updateData);
         var (result, msg) = await t.PerformUpdate();
         Assert.True(result);
         Assert.Equal("good 4.3.2.1", msg);

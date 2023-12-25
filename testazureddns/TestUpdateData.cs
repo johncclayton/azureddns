@@ -1,5 +1,5 @@
-using System;
-using azureddns;
+using AzureAppFunc;
+using AzureAppFunc.logic;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -27,33 +27,33 @@ public class TestUpdateData
         Assert.Contains("despite", msg3);
 
         d.reqip = "1.2.3.4";
-        Assert.True(d.IsValid(out string msg4));
+        Assert.True(d.IsValid(out string _));
     }
     
     [Fact]
     public void TestCanSerializeWithNullBody()
     {
-        update.GetUpdateDataFromRequest("z", "n", "g", "ip");
+        Update.GetUpdateDataFromRequest("z", "n", "g", "ip");
     }
     
     [Fact]
     public void TestCanSerializeWithEmptyBody()
     {
-        update.GetUpdateDataFromRequest("z", "n", "g", "ip", "");
+        Update.GetUpdateDataFromRequest("z", "n", "g", "ip", "");
     }
     
     [Fact]
     public void TestCanSerializeWithSenselessBody()
     {
-        update.GetUpdateDataFromRequest("z", "n", "g", "ip", "stupid");
+        Update.GetUpdateDataFromRequest("z", "n", "g", "ip", "stupid");
     }
 
     [Fact]
     public void TestCanSerializeAndOverrideNameInBody()
     {
-        UpdateData d = update.GetUpdateDataFromRequest("z", null, "g", "ip", "{name: 'something'}");
+        UpdateData d = Update.GetUpdateDataFromRequest("z", "N", "g", "ip", "{name: 'something'}");
         Assert.Equal("something", d.name);
-        Assert.Equal(true, d.IsValid(out _));
+        Assert.True(d.IsValid(out _));
     }
 
     [Theory]
@@ -61,18 +61,22 @@ public class TestUpdateData
     [InlineData(true, 3, @"{ zone: 'z', resgroup: 'g', reqip: '1.2.3.4', names: ['one', 'two', 'three'] }")]    
     [InlineData(false, 3, @"{ resgroup: 'g', reqip: '1.2.3.4', names: ['one', 'two', 'three'] }")]
     [InlineData(false, 0, @"{ resgroup: 'g', reqip: '1.2.3.4' }")]
-    public void TestCanDeserializeMultipleNames(bool expectValid, int numNames, string json_data)
+    public void TestCanDeserializeMultipleNames(bool expectValid, int numNames, string jsonData)
     {
-        var data = JsonConvert.DeserializeObject<UpdateMultipleNames>(json_data);
-        if (numNames > 0)
+        var data = JsonConvert.DeserializeObject<UpdateMultipleNames>(jsonData);
+        if (numNames > 0 && data != null)
         {
-            Assert.Equal(3, data.names.Length);
+            Assert.NotNull(data);
+            
+            Assert.NotNull(data!.names);
+            
+            Assert.Equal(3, data.names!.Length);
             Assert.Equal("one", data.names[0]);
             Assert.Equal("two", data.names[1]);
             Assert.Equal("three", data.names[2]);
         }
 
-        Assert.Equal(expectValid, data.IsValid(out _));
+        Assert.Equal(expectValid, data!.IsValid(out _));
     }
    
 }

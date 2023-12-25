@@ -1,0 +1,7 @@
+config:
+  azure-native:location: WestUS
+  azureddns:errorDocument: error.html
+  azureddns:indexDocument: index.html
+  azureddns:dnsZoneResourceGroup: effectiveflowrg
+  azureddns:dnsZoneName: effective-flow.ch
+  azureddns:resourceGroup: AzureDnsFunctionAppRG

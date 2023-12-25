@@ -1,4 +1,4 @@
-﻿namespace azureddns;
+﻿namespace AzureAppFunc.logic;
 
 public class UpdateMultipleNames : UpdateData
 {
@@ -10,11 +10,11 @@ public class UpdateMultipleNames : UpdateData
             return false;
         }
 
-        if (string.IsNullOrEmpty(name) && names.Length > 0)
+        if (names != null && string.IsNullOrEmpty(name) && names.Length > 0)
             name = names[0];
         
         return base.IsValid(out msg);
     }
 
-    public string[] names { get; set; }
+    public string[]? names { get; set;  }
 }
