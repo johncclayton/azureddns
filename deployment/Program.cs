@@ -145,6 +145,11 @@ return await Deployment.RunAsync(() =>
             {
                 new NameValuePairArgs
                 {
+                    Name = "APPINSIGHTS_INSTRUMENTATIONKEY",
+                    Value = "309cde9a-cc47-4b40-b9da-80cbbc35b84f"
+                },
+                new NameValuePairArgs
+                {
                     Name = "AzureWebJobsStorage",
                     Value = accountConnectionString,
                 },
