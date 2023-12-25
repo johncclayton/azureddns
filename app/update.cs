@@ -23,9 +23,12 @@ namespace AzureAppFunc
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("update function triggered.");
+            log.LogInformation("Starting update...");
             var bodyData = await new StreamReader(req.Body).ReadToEndAsync();
-            
+
+            var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
+            log.LogInformation($"AZURE_SUBSCRIPTION_ID: {subscriptionId}");
+                
             UpdateData r = GetUpdateDataFromRequest(
                 req.Query["zone"].ToString(),
                 req.Query["name"].ToString(),
@@ -38,17 +41,24 @@ namespace AzureAppFunc
                 return new BadRequestObjectResult(msg);
             }
 
-            DnsManagementClient client = await GetDNSManagementClient();
+            log.LogInformation("Fetching DNS Management Client...");
+            DnsManagementClient client = await GetDnsManagementClient(subscriptionId);
             UpdateDnsARecord updater = new UpdateDnsARecord(log, new AzureDnsManagementClient(client), r);
 
             try
             {
                 // response according to: https://www.dnsomatic.com/docs/api
                 Tuple<bool, string> result = await updater.PerformUpdate();
-                if(result.Item1)
+                if (result.Item1)
+                {
+                    log.LogInformation($"Successfully updated DNS record: {result.Item2}");
                     return new OkObjectResult(result.Item2);
+                }
                 else
+                {
+                    log.LogInformation($"Failed to update DNS record: {result.Item2}");
                     return new BadRequestObjectResult(result.Item2 ?? string.Empty);
+                }
             }
                         
             catch (Exception ex)
@@ -56,24 +66,24 @@ namespace AzureAppFunc
                 log.LogError($"failed to exec: {ex.Message}");
             }
 
-            return new BadRequestObjectResult($"fail {r.reqip}");
+            return new BadRequestObjectResult($"prob. due to exception - failed on req ip: {r.reqip}");
         }
 
-        private static async Task<DnsManagementClient> GetDNSManagementClient()
+        private static async Task<DnsManagementClient> GetDnsManagementClient(string subscriptionId)
         {
             // this bit just gets the subscription ID - which the DNSManagementClient will need,
             // and using it this way means we don't need to provide the app with an environment variable.
             var credential = new DefaultAzureCredential();
 
-            ArmClient armClient = new ArmClient(credential);
-            var subscription = await armClient.GetDefaultSubscriptionAsync();
+            // ArmClient armClient = new ArmClient(credential);
+            // var subscription = await armClient.GetDefaultSubscriptionAsync();
             
             var token = await credential.GetTokenAsync(new TokenRequestContext(new[] { $"https://management.azure.com/.default" }));
             ServiceClientCredentials dnsCreds = new TokenCredentials(token.Token);
             
-            // now fire up the DnsManagementClient using the token crendentials.
+            // now fire up the DnsManagementClient using the token credentials.
             DnsManagementClient client = new DnsManagementClient(dnsCreds);
-            client.SubscriptionId = subscription.Data.SubscriptionId;
+            client.SubscriptionId = subscriptionId;
 
             return new DnsManagementClient(dnsCreds);
         }

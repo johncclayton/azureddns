@@ -27,10 +27,13 @@ return await Deployment.RunAsync(() =>
     var errorDocument = config.Get("errorDocument") ?? "error.html";
 
     // Create a resource group for the website.
-    var resourceGroup = new ResourceGroup(config.Require("resourceGroup"));
+    var resourceGroup = new ResourceGroup(config.Require("resourceGroup"), new ResourceGroupArgs()
+    {
+        ResourceGroupName = config.Require("resourceGroup")
+    });
 
     // Create a blob storage account.
-    var account = new StorageAccount("account", new()
+    var account = new StorageAccount("account", new StorageAccountArgs
     {
         ResourceGroupName = resourceGroup.Name,
         Kind = Kind.StorageV2,
@@ -41,7 +44,7 @@ return await Deployment.RunAsync(() =>
     });
 
     // Create a storage container for the pages of the website.
-    var website = new StorageAccountStaticWebsite("website", new()
+    var website = new StorageAccountStaticWebsite("website", new StorageAccountStaticWebsiteArgs
     {
         AccountName = account.Name,
         ResourceGroupName = resourceGroup.Name,
@@ -50,7 +53,7 @@ return await Deployment.RunAsync(() =>
     });
 
     // Use a synced folder to manage the files of the website.
-    var syncedFolder = new SyncedFolder.AzureBlobFolder("synced-folder", new()
+    var syncedFolder = new SyncedFolder.AzureBlobFolder("synced-folder", new SyncedFolder.AzureBlobFolderArgs
     {
         Path = sitePath,
         ResourceGroupName = resourceGroup.Name,
@@ -59,7 +62,7 @@ return await Deployment.RunAsync(() =>
     });
 
     // Create a storage container for the serverless app.
-    var appContainer = new BlobContainer("app-container", new()
+    var appContainer = new BlobContainer("app-container", new BlobContainerArgs
     {
         AccountName = account.Name,
         ResourceGroupName = resourceGroup.Name,
@@ -68,9 +71,9 @@ return await Deployment.RunAsync(() =>
 
     // Compile the the app.
     var outputPath = "publish";
-    var publishCommand = Run.Invoke(new()
+    var publishCommand = Run.Invoke(new RunInvokeArgs
     {
-        Command = $"dotnet publish -c Release --output {outputPath}",
+        Command = $"dotnet publish --output {outputPath}",
         Dir = appPath,
     });
 
@@ -143,10 +146,15 @@ return await Deployment.RunAsync(() =>
             HttpLoggingEnabled = true,
             AppSettings = new[]
             {
+                // new NameValuePairArgs
+                // {
+                //     Name = "APPINSIGHTS_INSTRUMENTATIONKEY",
+                //     Value = "309cde9a-cc47-4b40-b9da-80cbbc35b84f"
+                // },
                 new NameValuePairArgs
                 {
-                    Name = "APPINSIGHTS_INSTRUMENTATIONKEY",
-                    Value = "309cde9a-cc47-4b40-b9da-80cbbc35b84f"
+                    Name = "AZURE_SUBSCRIPTION_ID",
+                    Value = config.Require("subscriptionId"),
                 },
                 new NameValuePairArgs
                 {

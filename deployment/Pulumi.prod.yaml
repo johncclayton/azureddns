@@ -3,5 +3,6 @@ config:
   azureddns:errorDocument: error.html
   azureddns:indexDocument: index.html
   azureddns:dnsZoneResourceGroup: effectiveflowrg
+  azureddns:subscriptionId: 7ae6ca58-40e5-46b9-ac78-4fccf10c7a47
   azureddns:dnsZoneName: effective-flow.ch
   azureddns:resourceGroup: AzureDnsFunctionAppRG
