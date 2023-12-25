@@ -1,11 +1,13 @@
 using System.Collections.Generic;
-using System.Text.Json;
 using System.IO;
+using System.Text.Json;
 using Pulumi;
 using Pulumi.AzureNative.Authorization;
 using Pulumi.AzureNative.Network.V20230701Preview;
 using Pulumi.AzureNative.Resources;
 using Pulumi.AzureNative.Storage;
+using Pulumi.AzureNative.Storage.Inputs;
+using Pulumi.AzureNative.Web;
 using Pulumi.AzureNative.Web.Inputs;
 using Pulumi.Command.Local;
 using static Pulumi.AzureNative.Web.ManagedServiceIdentityType;
@@ -25,21 +27,21 @@ return await Deployment.RunAsync(() =>
     var errorDocument = config.Get("errorDocument") ?? "error.html";
 
     // Create a resource group for the website.
-    var resourceGroup = new AzureNative.Resources.ResourceGroup(config.Require("resourceGroup"));
+    var resourceGroup = new ResourceGroup(config.Require("resourceGroup"));
 
     // Create a blob storage account.
-    var account = new AzureNative.Storage.StorageAccount("account", new()
+    var account = new StorageAccount("account", new()
     {
         ResourceGroupName = resourceGroup.Name,
-        Kind = AzureNative.Storage.Kind.StorageV2,
-        Sku = new AzureNative.Storage.Inputs.SkuArgs
+        Kind = Kind.StorageV2,
+        Sku = new SkuArgs
         {
-            Name = AzureNative.Storage.SkuName.Standard_LRS,
+            Name = SkuName.Standard_LRS,
         },
     });
 
     // Create a storage container for the pages of the website.
-    var website = new AzureNative.Storage.StorageAccountStaticWebsite("website", new()
+    var website = new StorageAccountStaticWebsite("website", new()
     {
         AccountName = account.Name,
         ResourceGroupName = resourceGroup.Name,
@@ -57,11 +59,11 @@ return await Deployment.RunAsync(() =>
     });
 
     // Create a storage container for the serverless app.
-    var appContainer = new AzureNative.Storage.BlobContainer("app-container", new()
+    var appContainer = new BlobContainer("app-container", new()
     {
         AccountName = account.Name,
         ResourceGroupName = resourceGroup.Name,
-        PublicAccess = AzureNative.Storage.PublicAccess.None,
+        PublicAccess = PublicAccess.None,
     });
 
     // Compile the the app.
@@ -73,7 +75,7 @@ return await Deployment.RunAsync(() =>
     });
 
     // Upload the serverless app to the storage container.
-    var appBlob = new AzureNative.Storage.Blob("app-blob", new()
+    var appBlob = new Blob("app-blob", new()
     {
         AccountName = account.Name,
         ResourceGroupName = resourceGroup.Name,
@@ -82,15 +84,15 @@ return await Deployment.RunAsync(() =>
     });
 
     // Create a shared access signature to give the Function App access to the code.
-    var signature = AzureNative.Storage.ListStorageAccountServiceSAS.Invoke(new()
+    var signature = ListStorageAccountServiceSAS.Invoke(new()
     {
         ResourceGroupName = resourceGroup.Name,
         AccountName = account.Name,
-        Protocols = AzureNative.Storage.HttpProtocol.Https,
+        Protocols = HttpProtocol.Https,
         SharedAccessStartTime = "2022-01-01",
-        SharedAccessExpiryTime = "2030-01-01",
-        Resource = AzureNative.Storage.SignedResource.C,
-        Permissions = AzureNative.Storage.Permissions.R,
+        SharedAccessExpiryTime = "2025-01-01",
+        Resource = SignedResource.C,
+        Permissions = Permissions.R,
         ContentType = "application/json",
         CacheControl = "max-age=5",
         ContentDisposition = "inline",
@@ -99,10 +101,10 @@ return await Deployment.RunAsync(() =>
     }).Apply(result => result.ServiceSasToken);
 
     // Create an App Service plan for the Function App.
-    var plan = new AzureNative.Web.AppServicePlan("plan", new()
+    var plan = new AppServicePlan("plan", new()
     {
         ResourceGroupName = resourceGroup.Name,
-        Sku = new AzureNative.Web.Inputs.SkuDescriptionArgs
+        Sku = new SkuDescriptionArgs
         {
             Name = "Y1",
             Tier = "Dynamic",
@@ -124,7 +126,7 @@ return await Deployment.RunAsync(() =>
     var accountConnectionString = Output.Format($"DefaultEndpointsProtocol=https;AccountName={account.Name};AccountKey={primaryStorageKey};EndpointSuffix=core.windows.net");
 
     // Create the Function App.
-    var app = new AzureNative.Web.WebApp("app", new()
+    var app = new WebApp("app", new()
     {
         ResourceGroupName = resourceGroup.Name,
         ServerFarmId = plan.Id,
@@ -134,7 +136,7 @@ return await Deployment.RunAsync(() =>
         {
             Type = SystemAssigned,
         },
-        SiteConfig = new AzureNative.Web.Inputs.SiteConfigArgs
+        SiteConfig = new SiteConfigArgs
         {
             NetFrameworkVersion = "v6.0",
             DetailedErrorLoggingEnabled = true,
@@ -146,17 +148,17 @@ return await Deployment.RunAsync(() =>
                     Name = "AzureWebJobsStorage",
                     Value = accountConnectionString,
                 },
-                new AzureNative.Web.Inputs.NameValuePairArgs
+                new NameValuePairArgs
                 {
                     Name = "FUNCTIONS_WORKER_RUNTIME",
                     Value = "dotnet",
                 },
-                new AzureNative.Web.Inputs.NameValuePairArgs
+                new NameValuePairArgs
                 {
                     Name = "FUNCTIONS_EXTENSION_VERSION",
                     Value = "~4",
                 },
-                new AzureNative.Web.Inputs.NameValuePairArgs
+                new NameValuePairArgs
                 {
                     Name = "WEBSITE_RUN_FROM_PACKAGE",
                     Value = Output.Tuple(account.Name, appContainer.Name, appBlob.Name, signature).Apply(values =>
@@ -169,7 +171,7 @@ return await Deployment.RunAsync(() =>
                     }),
                 },
             },
-            Cors = new AzureNative.Web.Inputs.CorsSettingsArgs
+            Cors = new CorsSettingsArgs
             {
                 AllowedOrigins = new[]
                 {
@@ -180,7 +182,7 @@ return await Deployment.RunAsync(() =>
     });
 
     // Create a JSON configuration file for the website.
-    var siteConfig = new AzureNative.Storage.Blob("config.json", new()
+    var siteConfig = new Blob("config.json", new()
     {
         AccountName = account.Name,
         ResourceGroupName = resourceGroup.Name,
@@ -188,7 +190,7 @@ return await Deployment.RunAsync(() =>
         ContentType = "application/json",
         Source = app.DefaultHostName.Apply(hostname => {
             var config = JsonSerializer.Serialize(new { api = $"https://{hostname}/api" });
-            return new Pulumi.StringAsset(config) as AssetOrArchive;
+            return new StringAsset(config) as AssetOrArchive;
         }),
     });
 
@@ -217,6 +219,7 @@ return await Deployment.RunAsync(() =>
     // Export the URLs of the website and serverless endpoint.
     return new Dictionary<string, object?>
     {
+        ["accountConnectionString"] = accountConnectionString,
         ["siteURL"] = account.PrimaryEndpoints.Apply(primaryEndpoints => primaryEndpoints.Web),
         ["apiURL"] = app.DefaultHostName.Apply(defaultHostName => $"https://{defaultHostName}/api"),
     };
