@@ -11,6 +11,15 @@
             config = await response.json();
         });
 
+        async function setDns() {
+            var dnsName = document.getElementById('dnsName').value;
+            var ipAddress = document.getElementById('ipAddress').value;
+
+            const response = await fetch(`${config.api}/update?name=${dnsName}&reqip=${ipAddress}&group=effectiveflowrg&zone=effective-flow.ch`);
+            const data = await response.json();
+
+        }
+        
         async function getTheTime() {
             const response = await fetch(`${config.api}/data`);
             const data = await response.json();
@@ -19,7 +28,14 @@
     </script>
 </head>
 <body>
-    <h1>⌚ What time is it?</h1>
+    <h1>Add a hostname entry</h1>
+    <form onsubmit="event.preventDefault(); setDns();">
+        <label for="dnsName">DNS Name:</label><br>
+        <input type="text" id="dnsName" name="dnsName"><br>
+        <label for="ipAddress">IP Address:</label><br>
+        <input type="text" id="ipAddress" name="ipAddress"><br>
+        <input type="submit" value="Submit">
+    </form>
     <p>
         <button onclick="getTheTime()">Ask the cloud!</button>
         <span id="now"></span>
