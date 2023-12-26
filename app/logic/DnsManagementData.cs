@@ -5,8 +5,20 @@ namespace AzureAppFunc.logic;
 
 public class DnsManagementData
 {
-    public string ZoneName, RecordSetName, ResourceGroupName, RequestedIpAddress;
-    public readonly IPAddress? ValidatedIpv4Address;
+    public string ZoneName, RecordSetName, ResourceGroupName;
+    
+    public string RequestedIpAddress
+    {
+        get => _requestedIpAddress;
+        set
+        {
+            _requestedIpAddress = value;
+            IPAddress.TryParse(value, out ValidatedIpv4Address);
+        }
+    }
+
+    public IPAddress? ValidatedIpv4Address;
+    private string _requestedIpAddress;
 
     public DnsManagementData(string zoneName, string recordSetName, string resourceGroupName, string requestedIpAddress)
     {
@@ -14,8 +26,6 @@ public class DnsManagementData
         this.RecordSetName = recordSetName;
         this.ResourceGroupName = resourceGroupName;
         this.RequestedIpAddress = requestedIpAddress;
-
-        IPAddress.TryParse(requestedIpAddress, out ValidatedIpv4Address);
     }
 
     public virtual bool IsValid(out string msg)

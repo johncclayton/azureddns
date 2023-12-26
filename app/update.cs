@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using System.Threading.Tasks;
 using AzureAppFunc.logic;
 using Microsoft.AspNetCore.Http;
@@ -7,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace AzureAppFunc
 {
@@ -19,11 +16,8 @@ namespace AzureAppFunc
             ILogger log)
         {
             log.LogInformation("Starting update...");
-            var bodyData = await new StreamReader(req.Body).ReadToEndAsync();
-
-            var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
-            log.LogInformation($"AZURE_SUBSCRIPTION_ID: {subscriptionId}");
-                
+            // var bodyData = await new StreamReader(req.Body).ReadToEndAsync();
+            
             DnsManagementData r = new DnsManagementData(
                 req.Query["zone"].ToString(),
                 req.Query["name"].ToString(),
@@ -33,6 +27,7 @@ namespace AzureAppFunc
 
             if(!r.IsValid(out string msg))
             {
+                log.LogInformation("Payload not valid, aborting");
                 return new BadRequestObjectResult(msg);
             }
 
@@ -40,9 +35,11 @@ namespace AzureAppFunc
             var result = await mgr.UpdateDnsRecordSetAsync(r);
             if (result.Item1 == false)
             {
+                log.LogInformation($"Update failed, {result.Item2}, aborting");
                 return new BadRequestObjectResult(result.Item2);
             } 
             
+            log.LogInformation($"Update succeeded, returning: {result.Item2}");
             return new OkObjectResult(result.Item2);
         }
     }
