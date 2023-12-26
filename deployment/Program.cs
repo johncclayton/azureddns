@@ -11,7 +11,6 @@ using Pulumi.AzureNative.Web;
 using Pulumi.AzureNative.Web.Inputs;
 using Pulumi.Command.Local;
 using static Pulumi.AzureNative.Web.ManagedServiceIdentityType;
-using AzureNative = Pulumi.AzureNative;
 using Deployment = Pulumi.Deployment;
 using SyncedFolder = Pulumi.SyncedFolder;
 
@@ -19,10 +18,10 @@ return await Deployment.RunAsync(() =>
 {
     // Import the program's configuration settings.
     var config = new Config();
-    
+
     var sitePath = config.Get("sitePath") ?? "../www";
     var appPath = config.Get("appPath") ?? "../app";
-    
+
     var indexDocument = config.Get("indexDocument") ?? "index.html";
     var errorDocument = config.Get("errorDocument") ?? "error.html";
 
@@ -100,7 +99,8 @@ return await Deployment.RunAsync(() =>
         CacheControl = "max-age=5",
         ContentDisposition = "inline",
         ContentEncoding = "deflate",
-        CanonicalizedResource = Output.Tuple(account.Name, appContainer.Name).Apply(values => $"/blob/{values.Item1}/{values.Item2}"),
+        CanonicalizedResource = Output.Tuple(account.Name, appContainer.Name)
+            .Apply(values => $"/blob/{values.Item1}/{values.Item2}"),
     }).Apply(result => result.ServiceSasToken);
 
     // Create an App Service plan for the Function App.
@@ -113,7 +113,7 @@ return await Deployment.RunAsync(() =>
             Tier = "Dynamic",
         },
     });
-    
+
     var storageAccountKeys = ListStorageAccountKeys.Invoke(new ListStorageAccountKeysInvokeArgs
     {
         ResourceGroupName = resourceGroup.Name,
@@ -125,8 +125,10 @@ return await Deployment.RunAsync(() =>
         var firstKey = accountKeys.Keys[0].Value;
         return Output.CreateSecret(firstKey);
     });
-    
-    var accountConnectionString = Output.Format($"DefaultEndpointsProtocol=https;AccountName={account.Name};AccountKey={primaryStorageKey};EndpointSuffix=core.windows.net");
+
+    var accountConnectionString =
+        Output.Format(
+            $"DefaultEndpointsProtocol=https;AccountName={account.Name};AccountKey={primaryStorageKey};EndpointSuffix=core.windows.net");
 
     // Create the Function App.
     var app = new WebApp("app", new()
@@ -201,7 +203,8 @@ return await Deployment.RunAsync(() =>
         ResourceGroupName = resourceGroup.Name,
         ContainerName = website.ContainerName,
         ContentType = "application/json",
-        Source = app.DefaultHostName.Apply(hostname => {
+        Source = app.DefaultHostName.Apply(hostname =>
+        {
             var config = JsonSerializer.Serialize(new { api = $"https://{hostname}/api" });
             return new StringAsset(config) as AssetOrArchive;
         }),
@@ -209,7 +212,7 @@ return await Deployment.RunAsync(() =>
 
     var dnsZoneRg = GetResourceGroup.Invoke(new()
     {
-         ResourceGroupName= config.Require("dnsZoneResourceGroup"),
+        ResourceGroupName = config.Require("dnsZoneResourceGroup"),
     });
 
     var dnsZone = GetZone.Invoke(new GetZoneInvokeArgs()
@@ -220,13 +223,26 @@ return await Deployment.RunAsync(() =>
 
     var currentConfig = GetClientConfig.Invoke();
     var subscriptionId = currentConfig.Apply(cc => cc.SubscriptionId);
-    
-    var roleAssignment = new RoleAssignment("role-assignment", new RoleAssignmentArgs
+
+    _ = new RoleAssignment("role-assignment", new RoleAssignmentArgs
     {
         PrincipalId = app.Identity.Apply(identity => identity!.PrincipalId),
         PrincipalType = PrincipalType.ServicePrincipal,
-        RoleDefinitionId = Output.Format($"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{RoleId.DnsZoneContributorId}"), 
+        RoleDefinitionId =
+            Output.Format(
+                $"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{RoleId.DnsZoneContributorId}"),
         Scope = dnsZone.Apply(z => z.Id)
+    });
+
+    // Reader: on the resource group of the DNS Zone we're affecting.
+    _ = new RoleAssignment("role-assignment-rg-read", new RoleAssignmentArgs
+    {
+        PrincipalId = app.Identity.Apply(identity => identity!.PrincipalId),
+        PrincipalType = PrincipalType.ServicePrincipal,
+        RoleDefinitionId =
+            Output.Format(
+                $"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{RoleId.ReaderId}"),
+        Scope = RoleId.ResourceGroupScope(subscriptionId, Output.Create(config.Require("dnsZoneResourceGroup")))
     });
     
     // Export the URLs of the website and serverless endpoint.
@@ -240,5 +256,9 @@ return await Deployment.RunAsync(() =>
 
 static class RoleId
 {
+    public static Output<string> ResourceGroupScope(Output<string> subsId, Output<string> groupName) =>
+        Output.Format($"/subscriptions/{subsId}/resourcegroups/{groupName}");
+
+    public static readonly string ReaderId = "acdd72a7-3385-48ef-bd42-f606fba81ae7";
     public static readonly string DnsZoneContributorId = "befefa01-2a29-4197-83a8-272ff33ce314";
 }

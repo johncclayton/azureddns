@@ -81,8 +81,7 @@ public class DnsManagement : IDnsManagement
         }
         catch (RequestFailedException ex)
         {
-            Console.WriteLine($"Failed to update DNS record: {ex.Message}");
-            return new Tuple<bool, string>(false, "azure error");
+            return new Tuple<bool, string>(false, $"azure error: {ex.Message}");
         }
     }
 
