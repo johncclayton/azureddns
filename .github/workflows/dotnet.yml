@@ -51,7 +51,7 @@ jobs:
       run: |
         cd deployment
         pulumi stack select effectiveflow/prod
-        pulumi config set-all --plaintext azure-native:useOidc=true --plaintext azure-native:clientId=${{ env.AZURE_CLIENT_ID }} --plaintext azure-native:tenantId=${{ env.AZURE_TENANT_ID }} --plaintext azure-native:subscriptionId=${{ env.AZURE_SUBCRIPTION_ID }}
+        pulumi config set-all --plaintext azure-native:useOidc=true --plaintext azure-native:clientId=${{ env.AZURE_CLIENT_ID }} --plaintext azure-native:tenantId=${{ env.AZURE_TENANT_ID }} --plaintext azure-native:subscriptionId=${{ env.AZURE_SUBSCRIPTION_ID }}
         pulumi up -yf
       env:
         ARM_USE_MSI: true
