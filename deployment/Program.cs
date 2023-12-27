@@ -130,7 +130,6 @@ return await Deployment.RunAsync(() =>
         Output.Format(
             $"DefaultEndpointsProtocol=https;AccountName={account.Name};AccountKey={primaryStorageKey};EndpointSuffix=core.windows.net");
 
-    // Create the Function App.
     var app = new WebApp("app", new()
     {
         ResourceGroupName = resourceGroup.Name,
@@ -151,13 +150,8 @@ return await Deployment.RunAsync(() =>
                 // new NameValuePairArgs
                 // {
                 //     Name = "APPINSIGHTS_INSTRUMENTATIONKEY",
-                //     Value = "309cde9a-cc47-4b40-b9da-80cbbc35b84f"
+                //     Value = "some-valid-instrumentation-key-goes-here"
                 // },
-                new NameValuePairArgs
-                {
-                    Name = "AZURE_SUBSCRIPTION_ID",
-                    Value = config.Require("subscriptionId"),
-                },
                 new NameValuePairArgs
                 {
                     Name = "AzureWebJobsStorage",
