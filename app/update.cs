@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AzureAppFunc.logic;
 using Microsoft.AspNetCore.Http;
@@ -16,31 +19,49 @@ namespace AzureAppFunc
             ILogger log)
         {
             log.LogInformation("Starting update...");
-            // var bodyData = await new StreamReader(req.Body).ReadToEndAsync();
             
-            DnsManagementData r = new DnsManagementData(
+            DnsManagementZone z = DnsManagementZone.TryParse(
                 req.Query["zone"].ToString(),
                 req.Query["name"].ToString(),
                 req.Query["group"].ToString(),
                 req.Query["reqip"].ToString() 
                 );
 
-            if(!r.IsValid(out string msg))
+            if (0 == z.ChildRecordSet.Count)
             {
-                log.LogInformation("Payload not valid, aborting");
-                return new BadRequestObjectResult(msg);
+                log.LogInformation($"No valid record sets / names found, name param is probably, aborting");
+                return new BadRequestObjectResult("911 no valid record sets / names found, name param is probably, aborting");
+            }
+            
+            foreach(var r in z.ChildRecordSet)
+            {
+                log.LogInformation($"Validating RecordSet: {r.RecordSetName}, IP: {r.RequestedIpAddress}");
+
+                var valid = r.IsValid();
+                if(!valid.Item1)
+                {
+                    log.LogInformation($"RecordSet: {r.RecordSetName}, IP: {r.RequestedIpAddress} not valid, {valid.Item2}, aborting");
+                    return new BadRequestObjectResult(valid.Item2);
+                }
             }
 
-            DnsManagement mgr = new DnsManagement();
-            var result = await mgr.UpdateDnsRecordSetAsync(r);
-            if (result.Item1 == false)
+            List<Tuple<bool, string>> results = new();
+            foreach(var childRs in z.ChildRecordSet)
             {
-                log.LogInformation($"Update failed, {result.Item2}, aborting");
-                return new BadRequestObjectResult(result.Item2);
-            } 
+                log.LogInformation($"Updating RecordSet: {childRs.RecordSetName}, IP: {childRs.RequestedIpAddress}");
+                var result = await childRs.UpdateDnsRecordSetAsync();
+                results.Add(result);
+                if (result.Item1 == false)
+                {
+                    log.LogInformation($"Update failed on {childRs.RecordSetName}, {result.Item2}, aborting");
+                    return new BadRequestObjectResult(result.Item2);
+                } 
+            }
             
-            log.LogInformation($"Update succeeded, returning: {result.Item2}");
-            return new OkObjectResult(result.Item2);
+            // just pick the first as the one to return status for.
+            var theFirst = results.First();
+            log.LogInformation($"Update succeeded, returning: {theFirst.Item2}");
+            return new OkObjectResult(theFirst.Item2);
         }
     }
 }

@@ -224,6 +224,7 @@ return await Deployment.RunAsync(() =>
     var currentConfig = GetClientConfig.Invoke();
     var subscriptionId = currentConfig.Apply(cc => cc.SubscriptionId);
 
+    // DNS Zone Contributor: on the DNS Zone we're affecting.
     _ = new RoleAssignment("role-assignment", new RoleAssignmentArgs
     {
         PrincipalId = app.Identity.Apply(identity => identity!.PrincipalId),
