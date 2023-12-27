@@ -47,7 +47,7 @@ jobs:
       uses: pulumi/action-install-pulumi-cli@v1.0.1
 
     - name: Pulumi Up
-#      if: github.event_name == 'pull_request' && github.base_ref == 'prod'
+      if: github.event_name == 'pull_request' && github.base_ref == 'prod'
       run: |
         cd deployment
         pulumi stack select effectiveflow/prod
