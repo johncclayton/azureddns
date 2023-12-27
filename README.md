@@ -1,7 +1,17 @@
+# Purpose
+
+Provides an Azure Function App that can be used as a DynDNS provider for Synology NAS devices specifically to
+allow Synology's DDNS functionality to populate your own Azure DNS Zone.
+
+The repository has three major parts - the Azure Function App, the Pulumi deployment, and the Synology NAS 
+1. app/ directory - contains the Azure Function App code
+2. deployment/ directory - contains the Pulumi deployment code
+3. testazureddns/ directory - contains the system test harness
+ 
 # Security
 
-To make a call into the HTTP API, you will need an access code.  This is because anonymous calls are 
-switched off for this app. 
+To make a call into the HTTP API of the Azure Function App, you will need an access code.  This is
+because anonymous calls are switched off. 
 
 To get the key, go to the Azure Function, and in the App Keys section either create one or pick the Default
 key.  
