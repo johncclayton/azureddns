@@ -1,0 +1,42 @@
+name: Azure Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore AzureFuncApp/AzureFuncApp.csproj
+
+    - name: Build
+      run: dotnet build AzureFuncApp/AzureFuncApp.csproj --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test AzureFuncApp/AzureFuncApp.csproj --no-restore --verbosity normal
+
+    - name: Install Pulumi CLI
+      uses: pulumi/action-install-pulumi-cli@v1.0.1
+
+    - name: Pulumi Up
+      run: |
+        cd deployment
+        pulumi up --yes
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
