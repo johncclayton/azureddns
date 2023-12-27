@@ -20,13 +20,13 @@ jobs:
         dotnet-version: '6.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore AzureFuncApp/AzureFuncApp.csproj
-
+      run: dotnet restore .\azureddns.sln
+    
     - name: Build
-      run: dotnet build AzureFuncApp/AzureFuncApp.csproj --configuration Release --no-restore
+      run: dotnet build .\azureddns.sln --configuration Release --no-restore
 
     - name: Test
-      run: dotnet test AzureFuncApp/AzureFuncApp.csproj --no-restore --verbosity normal
+      run: cd testazureddns && dotnet test --verbosity normal --no-restore
 
     - name: Install Pulumi CLI
       uses: pulumi/action-install-pulumi-cli@v1.0.1
