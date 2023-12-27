@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
       - prod
   pull_request:
     branches:
@@ -35,6 +36,7 @@ jobs:
       uses: pulumi/action-install-pulumi-cli@v1.0.1
 
     - name: Pulumi Up
+      if: github.event_name == 'pull_request' && github.base_ref == 'prod'
       run: |
         cd deployment
         pulumi up -yf
