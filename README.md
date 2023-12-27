@@ -63,6 +63,7 @@ The following table lists the values you can set / configure:
 
 If you want to run this as part of a CI/CD pipeline, you'll need a service principal with the following permissions:
  * Contributor on subscription (to create resource group + function app)
+ * User assigned identity administrator (to assign the roles via pulumi deployment app)
 
 Make sure you provide the following secrets to the pipeline file, or configure them in the pipeline itself:
 

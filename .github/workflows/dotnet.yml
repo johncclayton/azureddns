@@ -1,5 +1,9 @@
 name: Build and Publish Pipeline
 
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+  
 on:
   push:
     branches:
@@ -13,10 +17,17 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
+    environment: production
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+
+    - name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
@@ -39,6 +50,7 @@ jobs:
       if: github.event_name == 'pull_request' && github.base_ref == 'prod'
       run: |
         cd deployment
+        pulumi config set-all --plaintext azure-native:useOidc=true --plaintext azure-native:oidcRequestToken=$OIDC_REQUEST_TOKEN --plaintext azure-native:oidcRequestUrl=$OIDC_REQUEST_URL --plaintext azure-native:clientId=$AZURE_CLIENT_ID --plaintext azure-native:tenantId=$AZURE_TENANT_ID
         pulumi up -yf
       env:
         ARM_USE_MSI: true
