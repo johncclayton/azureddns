@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using static System.String;
 
 namespace AzureAppFunc
 {
@@ -19,11 +20,16 @@ namespace AzureAppFunc
             ILogger log)
         {
             log.LogInformation("Starting update...");
+
+            var extras = req.Query["extras"].ToString();
+            var name = req.Query["name"].ToString();
+            if (!IsNullOrEmpty(extras))
+                name += $", {extras}";
             
             DnsManagementZone z = DnsManagementZone.TryParse(
                 req.Query["zone"].ToString(),
-                req.Query["name"].ToString(),
                 req.Query["group"].ToString(),
+                name,
                 req.Query["reqip"].ToString() 
                 );
 

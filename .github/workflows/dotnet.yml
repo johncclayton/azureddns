@@ -1,4 +1,4 @@
-name: Azure Pipeline
+name: Build and Publish Pipeline
 
 on:
   push:
