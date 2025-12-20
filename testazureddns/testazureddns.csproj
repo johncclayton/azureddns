@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
+        <LangVersion>10</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\azureddns.csproj" />
+      <ProjectReference Include="..\app\AzureFuncApp.csproj" />
     </ItemGroup>
 
 </Project>

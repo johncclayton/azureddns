@@ -1,0 +1,3 @@
+name: azureddns
+runtime: dotnet
+description: A C# program to deploy a serverless application on Azure
